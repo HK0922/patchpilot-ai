@@ -1,0 +1,6 @@
+FROM python:3.12.12-slim
+COPY patchpilot/_test_harness.py /opt/patchpilot/test_harness.py
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0
+WORKDIR /repo
+USER 65534:65534
+ENTRYPOINT ["python", "-I", "/opt/patchpilot/test_harness.py"]

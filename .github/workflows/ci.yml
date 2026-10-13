@@ -1,0 +1,66 @@
+name: Verify PatchPilot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Python workflow and Docker verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -r requirements.lock
+          python -m pip install -e . --no-deps
+      - name: Build isolated test image
+        run: docker build -f Dockerfile.sandbox -t patchpilot-sandbox:0.1 .
+      - name: Run backend and real-container checks
+        run: python -m pytest
+        env:
+          PATCHPILOT_DOCKER_INTEGRATION: '1'
+      - name: Reproduce scripted evaluation
+        run: python scripts/benchmark.py
+      - name: Retain evaluation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: scripted-fixture-evaluation
+          path: benchmarks/results.json
+          retention-days: 14
+
+  frontend:
+    name: TypeScript, UI checks, and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install locked frontend dependencies
+        run: npm ci
+      - name: Test interface behavior
+        run: npm test
+      - name: Compile and build
+        run: npm run build

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patchpilot-ai"
+version = "0.2.0"
+description = "A reviewable issue-to-patch agent with executable evidence and bounded autonomy."
+requires-python = ">=3.11"
+dependencies = ["fastapi==0.143.0", "uvicorn==0.54.0", "httpx==0.28.1", "pydantic==2.14.0"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[project.scripts]
+patchpilot = "patchpilot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["patchpilot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

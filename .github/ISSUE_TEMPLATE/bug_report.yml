@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible problem in the workflow or interface.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Use a minimal synthetic example. Keep keys, tokens, private code, and personal data out of public reports. See SECURITY.md for sensitive findings.
+  - type: input
+    id: version
+    attributes:
+      label: Version and environment
+      placeholder: v0.2.0, OS, Python/Node versions, browser
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Execution mode
+      options:
+        - Browser workspace / replay
+        - Local scripted demo
+        - Local live repair
+        - CLI / registration
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest file or input example needed.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant evidence
+      description: Sanitized errors, test output, or screenshots from the actual interface.

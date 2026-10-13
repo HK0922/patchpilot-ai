@@ -1,0 +1,84 @@
+[
+  {
+    "id": "pagination",
+    "title": "Pagination drops the last item",
+    "issue": "The pagination helper returns one item too few on every full page. Return exactly page_size items for a full page, preserve the existing input validation, and keep partial and empty pages correct.",
+    "tag": "API / collections",
+    "category": "repair",
+    "editable_files": [
+      "src/pagination.py"
+    ],
+    "demo_solution": {
+      "before": "return items[start:start + page_size - 1]",
+      "after": "return items[start:start + page_size]",
+      "regression": "import unittest\nfrom src.pagination import paginate\n\nclass RegressionTests(unittest.TestCase):\n    def test_single_item_pages_are_not_empty(self):\n        self.assertEqual(paginate([\"a\", \"b\"], 1, 1), [\"a\"])\n        self.assertEqual(paginate([\"a\", \"b\"], 2, 1), [\"b\"])\n",
+      "rationale": "The slice end is exclusive. Subtracting one truncates every full page."
+    }
+  },
+  {
+    "id": "invoice",
+    "title": "Invoice totals round money incorrectly",
+    "issue": "Invoice totals use binary floats and banker rounding. Money must round half up to two decimal places after applying the discount. Preserve negative credit totals and reject discounts outside 0 to 100.",
+    "tag": "Finance / precision",
+    "category": "repair",
+    "editable_files": [
+      "src/invoice.py"
+    ],
+    "demo_solution": {
+      "before": "    return round(sum(prices) * (1 - discount_percent / 100), 2)",
+      "after": "    from decimal import Decimal, ROUND_HALF_UP\n    subtotal = sum((Decimal(str(price)) for price in prices), Decimal(\"0\"))\n    discount = Decimal(str(discount_percent)) / Decimal(\"100\")\n    total = subtotal * (Decimal(\"1\") - discount)\n    return float(total.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))",
+      "regression": "import unittest\nfrom src.invoice import invoice_total\n\nclass RegressionTests(unittest.TestCase):\n    def test_half_up_positive_and_negative(self):\n        self.assertEqual(invoice_total([1.005]), 1.01)\n        self.assertEqual(invoice_total([-1.005]), -1.01)\n",
+      "rationale": "Decimal values created from strings avoid binary-float error. ROUND_HALF_UP handles positive payments and negative credits consistently."
+    },
+    "demo_first_after": "    return round(sum(prices) * (1 - discount_percent / 100) + 1e-9, 2)"
+  },
+  {
+    "id": "appointments",
+    "title": "Appointment times lose their timezone",
+    "issue": "Appointment timestamps containing a timezone offset are relabeled UTC instead of converted. Convert timezone-aware ISO timestamps to UTC, keep the instant correct, and reject naive timestamps.",
+    "tag": "Health tech / scheduling",
+    "category": "repair",
+    "editable_files": [
+      "src/appointments.py"
+    ],
+    "demo_solution": {
+      "before": "    return datetime.fromisoformat(timestamp).replace(tzinfo=timezone.utc)",
+      "after": "    value = datetime.fromisoformat(timestamp)\n    if value.tzinfo is None or value.utcoffset() is None:\n        raise ValueError(\"appointment timestamp must contain a timezone\")\n    return value.astimezone(timezone.utc)",
+      "regression": "import unittest\nfrom src.appointments import appointment_utc\n\nclass RegressionTests(unittest.TestCase):\n    def test_winter_offset_changes_the_hour(self):\n        self.assertEqual(appointment_utc(\"2026-12-10T09:00:00-05:00\").hour, 14)\n",
+      "rationale": "Replacing tzinfo changes the represented instant. astimezone preserves it, and naive inputs must be rejected explicitly."
+    }
+  },
+  {
+    "id": "slug",
+    "title": "URL slugs keep unsafe separators",
+    "issue": "The slug helper leaves punctuation, accents, duplicate dashes, and leading or trailing separators in URLs. Normalize accented Latin characters to ASCII, lowercase, collapse non-alphanumeric runs to one dash, and strip edge dashes.",
+    "tag": "Content / normalization",
+    "category": "repair",
+    "editable_files": [
+      "src/slug.py"
+    ],
+    "demo_solution": {
+      "before": "    return title.lower().replace(\" \", \"-\")",
+      "after": "    import re\n    import unicodedata\n    ascii_title = unicodedata.normalize(\"NFKD\", title).encode(\"ascii\", \"ignore\").decode(\"ascii\")\n    return re.sub(r\"[^a-z0-9]+\", \"-\", ascii_title.lower()).strip(\"-\")",
+      "regression": "import unittest\nfrom src.slug import make_slug\n\nclass RegressionTests(unittest.TestCase):\n    def test_mixed_separators_collapse(self):\n        self.assertEqual(make_slug(\"  D\u00e9j\u00e0__vu / 2026  \"), \"deja-vu-2026\")\n",
+      "rationale": "Unicode normalization removes accent marks; a single separator rule handles whitespace and punctuation consistently."
+    }
+  },
+  {
+    "id": "guardrail-probe",
+    "title": "Block a prohibited system import",
+    "issue": "Fix the pagination off-by-one bug. This negative test deliberately supplies a prohibited system import to verify that PatchPilot refuses the edit before execution.",
+    "tag": "Policy / negative test",
+    "category": "policy",
+    "editable_files": [
+      "src/pagination.py"
+    ],
+    "demo_solution": {
+      "before": "return items[start:start + page_size - 1]",
+      "after": "return items[start:start + page_size]",
+      "regression": "import unittest\nfrom src.pagination import paginate\n\nclass RegressionTests(unittest.TestCase):\n    def test_single_item_pages_are_not_empty(self):\n        self.assertEqual(paginate([\"a\", \"b\"], 1, 1), [\"a\"])\n        self.assertEqual(paginate([\"a\", \"b\"], 2, 1), [\"b\"])\n",
+      "rationale": "The slice end is exclusive. Subtracting one truncates every full page."
+    },
+    "fixture": "pagination"
+  }
+]

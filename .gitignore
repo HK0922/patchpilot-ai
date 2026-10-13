@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.env.*
+!.env.example
+node_modules/
+.pytest_cache/
+.data/
+*.db
+*.db-shm
+*.db-wal
+web/tsconfig.tsbuildinfo
+artifacts/
+
+# Build output and generated download bundles
+/dist/
+/web/public/downloads/

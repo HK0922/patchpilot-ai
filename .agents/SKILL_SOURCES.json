@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/aditya-ariosity/ux-ui-skills",
+  "commit": "74308ad0beac6d880d87aaf5660b5eaf3bd8afdd",
+  "release": "2.1.1",
+  "license": "MIT",
+  "skills": [
+    "ux-ui-audit",
+    "dashboard-redesign",
+    "design-system-review",
+    "ai-product-design",
+    "case-study-writer",
+    "handoff-to-dev",
+    "product-design"
+  ],
+  "scope": "project"
+}
